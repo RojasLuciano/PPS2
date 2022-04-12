@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { RootStackParamList } from "../../App";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Fab } from "../components/Fab";
+import {  Snackbar } from 'react-native-paper';
 
 
 
@@ -37,15 +38,16 @@ const LoginScreen = () => {
     };
 
 
+    
     const handlerLogin = async () => {
         await signInWithEmailAndPassword(auth, email, password)
             .then((userCredential: { user: any; }) => {
                 const user = userCredential.user;
-             
+
                 console.log("Logged in with", user.email);
             })
             .catch(error => {
-                
+
 
                 switch (error.code) {
                     case 'auth/invalid-email':
@@ -117,9 +119,10 @@ const LoginScreen = () => {
                         style={styles.input}
 
                         clearButtonMode="always"
+                     
                     />
-                
-               
+
+
 
 
                     <TextInput
