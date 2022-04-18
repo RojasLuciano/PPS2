@@ -6,7 +6,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { RootStackParamList } from "../../App";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Fab } from "../components/Fab";
-import {  Snackbar } from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 
 
 
@@ -38,7 +38,7 @@ const LoginScreen = () => {
     };
 
 
-    
+
     const handlerLogin = async () => {
         await signInWithEmailAndPassword(auth, email, password)
             .then((userCredential: { user: any; }) => {
@@ -51,7 +51,8 @@ const LoginScreen = () => {
 
                 switch (error.code) {
                     case 'auth/invalid-email':
-                        alert('Invalid email')
+                        setErrorMessage('Invalid email');
+
                         break;
                     case 'auth/user-not-found':
                         alert('User not found')
@@ -98,6 +99,8 @@ const LoginScreen = () => {
         navigation.replace('Index');
     }
 
+    const [errorMessage, setErrorMessage] = React.useState('');
+
     return (
 
         <KeyboardAvoidingView
@@ -119,10 +122,14 @@ const LoginScreen = () => {
                         style={styles.input}
 
                         clearButtonMode="always"
-                     
+
                     />
+                    
+                    
 
 
+
+                   
 
 
                     <TextInput
