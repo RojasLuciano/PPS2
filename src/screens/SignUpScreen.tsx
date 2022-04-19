@@ -5,52 +5,67 @@ import { auth } from "../database/firebase";
 import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { RootStackParamList } from "../../App";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import Spinner from "react-native-loading-spinner-overlay/lib";
+import Modal from "react-native-modal";
+
 
 const SignScreen = () => {
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
     const [rePassword, setRePassword] = React.useState("");
     const [displayName, setDisplayName] = React.useState("");
+    const [message, setMessage] = React.useState("");
+    const [loading, setLoading] = React.useState(false);
+    const [isModalVisible, setModalVisible] = React.useState(false);
+
+    const toggleModal = () => {
+        setModalVisible(!isModalVisible);
+    };
 
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                navigation.replace('Home');
-            }
-        })
-        return unsubscribe;
-    }, []);
+    setTimeout(() => {
+        setMessage(false);
+    }, 5000);
+
+   
 
     const handlerSingUp = async () => {
-        if (password === rePassword) {
-            createUserWithEmailAndPassword(auth, email, password)
+        if (displayName === "" || email === "" || password === "" || rePassword === "") {
+            setMessage("Todos los campos son obligatorios");
+        } else if (password === rePassword) {
+            setLoading(true);
+            await createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential: { user: any; }) => {
                     userCredential.user
-                    console.log("Registred with");
+                }).then(() => {
+
+                    toggleModal();
+                    setTimeout(() => {
+                        navigation.replace('Login');
+                    }, 2000);
                 })
                 .catch(error => {
                     switch (error.code) {
                         case 'auth/invalid-email':
-                            alert('Invalid email')
+                            setMessage("Correo inválido");
                             break;
                         case 'auth/email-already-in-use':
-                            alert('Email already in use')
+                            setMessage("Correo ya registrado");
                             break;
                         case 'auth/missing-email':
-                            alert('You must enter the email')
+                            setMessage("Correo no ingresado");
                             break;
                         case 'auth/internal-error':
-                            alert('Enter password')
+                            setMessage("Ingrese contraseña");
                             break;
                         default:
-                            alert(error.message)
+                            setMessage(error.message)
                             break;
                     }
-                })
+                }).finally(() => { setLoading(false) });
         } else {
-            alert("Passwords don't match");
+            setMessage("Las contraseñas no coinciden");
         }
     }
 
@@ -59,55 +74,6 @@ const SignScreen = () => {
     }
 
     return (
-        // <KeyboardAvoidingView style={styles.container} behavior="padding">
-
-        //     <Text style={styles.buttonText}>PANTALLA DE REGISTRO</Text>
-
-
-
-        //     <View style={styles.inputContainer}>
-        //         <TextInput placeholder="Name"
-        //             value={displayName}
-        //             onChangeText={text => setDisplayName(text)}
-        //             style={styles.input}
-        //         />
-        //         <TextInput placeholder="Email"
-        //             value={email}
-        //             onChangeText={text => setEmail(text)}
-        //             style={styles.input}
-        //         />
-
-        //         <TextInput placeholder="Password"
-        //             value={password}
-        //             onChangeText={text => setPassword(text)}
-        //             style={styles.input}
-        //             secureTextEntry
-        //         />
-        //         <TextInput placeholder="Re-Password"
-        //             value={rePassword}
-        //             onChangeText={text => setRePassword(text)}
-        //             style={styles.input}
-        //             secureTextEntry
-        //         />
-        //     </View>
-
-        //     <View style={styles.buttonContainer} >
-
-        //         <TouchableOpacity
-        //             onPress={handlerSingUp}
-        //             style={[styles.button]}
-        //         >
-        //             <Text style={styles.buttonText}>Create</Text>
-        //         </TouchableOpacity>
-
-        //         <TouchableOpacity
-        //             onPress={handlerBack}
-        //             style={[styles.button, styles.buttonOutline]}
-        //         >
-        //             <Text style={styles.buttonOutlineText}>Back</Text>
-        //         </TouchableOpacity>
-        //     </View>
-        // </KeyboardAvoidingView>
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.container}
@@ -119,6 +85,30 @@ const SignScreen = () => {
                         <Text style={styles.subtitle} >Por favor complete los datos para continuar {"\n"}{"\n"}</Text>
                     </Text>
 
+                    <View style={styles.inputContainer}>
+                        {!!message ? <TouchableOpacity
+                            style={styles.buttonError}
+                        >
+                            <Text style={styles.buttonText} onPress={toggleModal} >{message}</Text>
+                        </TouchableOpacity  > : null}
+                    </View>
+
+                    <View>
+
+                        {!!isModalVisible ? <Modal isVisible={isModalVisible}>
+                            <View style={styles.modalContainer}>
+                             <Text style={styles.modalText}>Usuario creado con exito.</Text>
+
+                            </View>
+                        </Modal> : null}
+
+                    
+            
+                       
+
+                    </View>
+                    
+
                     <TextInput
                         placeholder="Nombre"
                         placeholderTextColor={"#ffffde"}
@@ -127,7 +117,7 @@ const SignScreen = () => {
                         style={styles.input}
                     />
                     <TextInput
-                        placeholder="Email"
+                        placeholder="Correo electrónico"
                         placeholderTextColor={"#ffffde"}
                         value={email}
                         onChangeText={text => setEmail(text)}
@@ -150,8 +140,27 @@ const SignScreen = () => {
                         style={styles.input}
                         secureTextEntry
                     />
+
+
+
                     <View>
+
+                        {loading
+                            &&
+                            <View style={styles.spinContainer}>
+                                <Spinner
+                                    visible={loading}
+                                    textStyle={styles.spinnerTextStyle}
+                                />
+                            </View>}
+
+
+
+
                         <Text style={styles.ingresarText} onPress={handlerSingUp}>Registrarse </Text>
+
+
+                        
                         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                             <Text style={{ color: "white" }}>Ya tiene una cuenta? </Text>
                             <TouchableOpacity onPress={handlerBack}>
@@ -230,58 +239,67 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginTop: 10,
         marginBottom: 10,
-    }
+    },
+    spinnerTextStyle: {
+        color: 'white',
+    },
+    spinContainer: {
+        position: 'absolute',
+        display: 'flex',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        top: 0,
+        height: '100%',
+        width: '100%',
+        zIndex: 100,
+    },
+    inputContainer: {
+        width: '80%',
+        marginTop: -70,
+        marginBottom: 10,
+        alignSelf: 'center',
+
+    },
+    buttonError: {
+        backgroundColor: 'red',
+        width: '100%',
+        padding: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    buttonOk: {
+        backgroundColor: 'green',
+        width: '100%',
+        padding: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: '700',
+        fontSize: 13,
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: '#8BC34A',
+        width: '60%',
+        height: '10%',
+        position: 'absolute',
+        borderRadius: 10,
+        
+        margin: 'auto',
+        textAlign: 'center',
+        alignSelf: 'center',
+    },
+    modalText: {
+        color: 'white',
+        fontWeight: '500',
+        fontSize: 15,
+        textAlign: 'center',
+        marginTop: 25,
+        marginBottom: 10,
+        alignSelf: 'center',
+
+    },
 });
-// const styles = StyleSheet.create({
-//     container: {
-//         flex: 1,
-//         alignItems: 'center',
-//         justifyContent: 'center',
-//     },
-//     logo: {
-//         width: '100%',
-//         height: 250,
-//     },
-//     inputContainer: {
-//         width: '80%',
-//         marginTop: 40,
-
-//     },
-//     input: {
-//         backgroundColor: 'white',
-//         paddingHorizontal: 15,
-//         paddingVertical: 10,
-//         borderRadius: 8,
-//         marginTop: 10,
-//     },
-//     buttonContainer: {
-//         width: '80%',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         marginTop: 40,
-//     },
-//     button: {
-//         backgroundColor: '#662483',
-//         width: '100%',
-//         padding: 15,
-//         borderRadius: 8,
-//         alignItems: 'center',
-//     },
-//     buttonOutline: {
-//         backgroundColor: 'white',
-//         marginTop: 5,
-//         borderColor: '#662483',
-//         borderWidth: 2,
-
-//     },
-//     buttonText: {
-//         color: 'white',
-//         fontWeight: '700',
-//         fontSize: 16,
-//     },
-//     buttonOutlineText: {
-//         color: '#662483',
-//         fontWeight: '700',
-//         fontSize: 16,
-//     },
-// })

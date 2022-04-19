@@ -6,29 +6,23 @@ import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { RootStackParamList } from "../../App";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Fab } from "../components/Fab";
-import { Snackbar } from 'react-native-paper';
+import Spinner from "react-native-loading-spinner-overlay/lib";
+
+
 
 
 
 const LoginScreen = () => {
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
+    const [message, setMessage] = React.useState("");
+    const [loading, setLoading] = React.useState(false);
+
+    setTimeout(() => {
+        setMessage(false);
+    }, 5000);
 
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                navigation.replace('Home');
-            }
-        })
-
-        return unsubscribe;
-    }, []);
-
-
-
-    const [loading, setLoading] = React.useState(false);
 
     const startLoading = () => {
         setLoading(true);
@@ -38,36 +32,27 @@ const LoginScreen = () => {
     };
 
 
-
     const handlerLogin = async () => {
+        setLoading(true);
         await signInWithEmailAndPassword(auth, email, password)
             .then((userCredential: { user: any; }) => {
                 const user = userCredential.user;
-
                 console.log("Logged in with", user.email);
-            })
+            }).then(() => { navigation.replace('Home'); })
             .catch(error => {
-
-
                 switch (error.code) {
                     case 'auth/invalid-email':
-                        setErrorMessage('Invalid email');
-
-                        break;
                     case 'auth/user-not-found':
-                        alert('User not found')
-                        break;
                     case 'auth/wrong-password':
-                        alert('Wrong password')
-                        break;
                     case 'auth/internal-error':
-                        alert('Enter password')
+                    case 'auth/too-many-requests':
+                        setMessage("Credenciales inválidas");
                         break;
                     default:
-                        alert(error.message)
+                        setMessage(error.message)
                         break;
                 }
-            })
+            }).finally(() => { setLoading(false) });
     }
 
     const functionCombined = () => {
@@ -95,12 +80,6 @@ const LoginScreen = () => {
         navigation.replace('SignUp');
     }
 
-    const handlerBack = () => {
-        navigation.replace('Index');
-    }
-
-    const [errorMessage, setErrorMessage] = React.useState('');
-
     return (
 
         <KeyboardAvoidingView
@@ -114,24 +93,25 @@ const LoginScreen = () => {
                         <Text style={styles.subtitle} >Por favor complete los datos para continuar {"\n"}{"\n"}</Text>
                     </Text>
 
+
+                    <View style={styles.inputContainer}>
+                        {!!message ? <TouchableOpacity
+                            style={styles.buttonError}
+                        >
+                            <Text style={styles.buttonText}>{message}</Text>
+                        </TouchableOpacity> : null}
+                    </View>
+
+
+
                     <TextInput
                         placeholder="Email"
                         placeholderTextColor={"#ffffde"}
                         value={email}
                         onChangeText={(text) => setEmail(text)}
                         style={styles.input}
-
                         clearButtonMode="always"
-
                     />
-                    
-                    
-
-
-
-                   
-
-
                     <TextInput
                         placeholder="Contraseña"
                         placeholderTextColor={"#ffffde"}
@@ -139,28 +119,19 @@ const LoginScreen = () => {
                         onChangeText={(text) => setPassword(text)}
                         style={styles.input}
                         secureTextEntry={true}
-
                     />
+
                     <View>
-                        {loading ? (
-                            <ActivityIndicator
-                                //visibility of Overlay Loading Spinner
-                                visible={loading}
-                                //Text with the Spinner
-                                textContent={'Loading...'}
-                                //Text style of the Spinner Text
-                                textStyle={styles.spinnerTextStyle}
-                            />
-                        ) : (
-                            <>
-                                <Text style={{ textAlign: 'center', fontSize: 20 }}>
-                                    React Native ActivityIndicator
-                                </Text>
-                                <Button title="Ingresar" onPress={functionCombined}></Button>
+                        {loading
+                            &&
+                            <View style={styles.spinContainer}>
+                                <Spinner
+                                    visible={loading}
+                                    textStyle={styles.spinnerTextStyle}
+                                />
+                            </View>}
 
-                            </>
-                        )}
-
+                        <Text style={styles.ingresarText} onPress={functionCombined}>Ingresar </Text>
 
                         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                             <Text style={{ color: "white" }}>No tiene una cuenta? </Text>
@@ -206,6 +177,8 @@ const LoginScreen = () => {
 
     );
 }
+
+
 
 export default LoginScreen
 const styles = StyleSheet.create({
@@ -263,7 +236,36 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     spinnerTextStyle: {
-        color: '#FFF',
+        color: 'white',
+    },
+    spinContainer: {
+        position: 'absolute',
+        display: 'flex',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        top: 0,
+        height: '100%',
+        width: '100%',
+        zIndex: 100,
+    },
+    inputContainer: {
+        width: '80%',
+        marginTop: -70,
+        marginBottom: 10,
+        alignSelf: 'center',
+
+    },
+    buttonError: {
+        backgroundColor: 'red',
+        width: '100%',
+        padding: 15,
+        borderRadius: 18,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: '700',
+        fontSize: 16,
     },
 });
-

@@ -29,13 +29,8 @@ const HomeScreen = () => {
                 >
                 <Text style={styles.buttonText}>Sign out</Text>
                 </TouchableOpacity>
-            </View>                       
-            {/* <Image 
-                source={require('../assets/EMU_Logo_01.png')}
-                resizeMode="contain"                 
-                style={styles.logo} 
-            />     */}
-        
+          </View>               
+          
     </KeyboardAvoidingView>
   );
 }
